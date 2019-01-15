@@ -74,7 +74,7 @@ cd "${SAVEDIR}/${D}"
 
 SSHPASS="${SFTPPWD}" sshpass -e sftp -oBatchMode=no -b - -o "User=${SFTPUSER}" "${SFTPHOST}" <<EOF
   cd backup
-  ls
+  ls -lh
   ${GET_HTML}
   ${GET_FILES}
   ${GET_MYSQL}
@@ -85,6 +85,6 @@ echo "listing of ${SAVEDIR}/${D} after sftp:"
 ls -alh ${SAVEDIR}/${D}/
 
 pushd "${SAVEDIR}/${D}" &>/dev/null
-M="$( echo "${SITENAME} site backuped to ${SAVEDIR}/${D}:\n$(stat --printf='%11s %n\n' *)" )"
+M="$( echo "${SITENAME} site backuped to ${SAVEDIR}/${D}:\n$(ls -gGh --time-style=+)" )"
 notifyme.sh "${D}:${SITENAME}_Alfahosting_Backup_SUCCESS" "$M"
 popd &>/dev/null

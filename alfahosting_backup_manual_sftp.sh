@@ -16,5 +16,8 @@ source "${HOME}/.config/alfahosting_backup/${SITE}.conf"
 
 
 echo "possible sftp commands: cd, ls, get, bye"
-echo "trying sftp .."
+echo "going to try sftp over sshpass .."
+echo "in case nothing happens, try following command with configured password '${SFTPPWD}'"
+echo "  sftp -oBatchMode=no -o 'User=${SFTPUSER}' '${SFTPHOST}'"
+echo "now trying .."
 SSHPASS="${SFTPPWD}" sshpass -e sftp -oBatchMode=no -o "User=${SFTPUSER}" "${SFTPHOST}"
