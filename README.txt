@@ -14,9 +14,13 @@ create and edit config file in $HOME/.config/alfahosting_backup/default.conf or 
   $ chmod 600 ~/.config/alfahosting_backup/default.conf
   $ nano ~/.config/alfahosting_backup/default.conf
 
+
+notification with notifyme:
 copy adjust the configuration file $HOME/.config/notifyme.conf
 copy notifyme.sh into the PATH, e.g. $HOME/bin
   it will be called with 2 arguments: subject and message
+requires the package ssmtp:
+  $ sudo apt-get install ssmtp
 
 run 'manual_sftp.sh' once to save hostkey of server in local hosts.
   this also tests function of get_files
