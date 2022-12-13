@@ -12,7 +12,10 @@ if [ ! -f "${HOME}/.config/alfahosting_backup/${SITE}.conf" ]; then
   exit 10
 fi
 
+# conf needs to define environment variables: SSHHOST, SSHUSER, SSHPWD
+#  BUP_HTML, BUP_FILES, BUP_MYSQL  each 0 or 1
 source "${HOME}/.config/alfahosting_backup/${SITE}.conf"
+H=$(hostname)
 
 
 D="/dev/shm/$(whoami)_${SITE}_alfahosting_backup"
@@ -64,3 +67,9 @@ wget --load-cookies cookies.txt \
      https://${ALFAHOST}/logout.php?user=${CONFIXXUSER} \
      2>errLogout.log
 
+L="/dev/shm/backup_${SITE}_${H}"
+rm -rf ${L}  &>/dev/null
+mkdir ${L} &>/dev/null
+cat - >>${L}/msg  <<EOF
+$(date "+%Y-%m-%d %H:%M:%S %a"): triggered start of backup of ${SITE} from host ${H}
+EOF

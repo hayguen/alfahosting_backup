@@ -12,7 +12,11 @@ if [ ! -f "${HOME}/.config/alfahosting_backup/${SITE}.conf" ]; then
   exit 10
 fi
 
+# conf needs to define environment variables: SSHHOST, SSHUSER, SSHPWD,
+#  BUP_HTML, BUP_FILES, BUP_MYSQL  each 0 or 1
+#  SAVEMNT, SAVEDIR
 source "${HOME}/.config/alfahosting_backup/${SITE}.conf"
+H=$(hostname)
 
 
 export PATH="${HOME}/bin:${PATH}"
@@ -47,11 +51,6 @@ else
   done
 fi
 
-if [ "${BUP_HTML}"  -ne 0 ]; then  GET_HTML="get html.tar.gz"   ; else GET_HTML=""  ; fi
-if [ "${BUP_FILES}" -ne 0 ]; then  GET_FILES="get files.tar.gz" ; else GET_FILES="" ; fi
-if [ "${BUP_MYSQL}" -ne 0 ]; then  GET_MYSQL="get mysql.tar.gz" ; else GET_MYSQL="" ; fi
-
-
 # remove files older than 30 days
 for d in `seq 31 38` ; do
   D=$( date -d "-${d} days" ${DATE_FILENAME_PATTERN} )
@@ -67,24 +66,42 @@ if [ ! -d "${SAVEDIR}/${D}" ]; then
   mkdir -p "${SAVEDIR}/${D}"
 fi
 
+L="/dev/shm/backup_${SITE}_${H}"
+mkdir ${L} &>/dev/null
+cat - >>${L}/msg  <<EOF
+$(date "+%Y-%m-%d %H:%M:%S %a"): download start of backup files for ${SITE} from host ${H}
+EOF
+
+
 echo ""
 echo "$(date):"
 echo "getting backup files to ${SAVEDIR}/${D} .."
 cd "${SAVEDIR}/${D}"
 
-SSHPASS="${SFTPPWD}" sshpass -e sftp -oBatchMode=no -b - -o "User=${SFTPUSER}" "${SFTPHOST}" <<EOF
-  cd backup
-  ls -lh
-  ${GET_HTML}
-  ${GET_FILES}
-  ${GET_MYSQL}
-  bye
-EOF
+if [ "${BUP_MYSQL}" -ne 0 ]; then  GET_MYSQL="mysql.tar.gz" ; else GET_MYSQL="" ; fi
+if [ "${BUP_FILES}" -ne 0 ]; then  GET_FILES="files.tar.gz" ; else GET_FILES="" ; fi
+if [ "${BUP_HTML}"  -ne 0 ]; then  GET_HTML="html.tar.gz"   ; else GET_HTML=""  ; fi
 
-echo "listing of ${SAVEDIR}/${D} after sftp:"
+for f in $(echo ${GET_MYSQL} ${GET_FILES} ${GET_HTML}) ; do
+  echo "get backup/${f} .."
+  SSHPASS="${SSHPWD}" sshpass -e scp "${SSHUSER}"@${SSHHOST}:backup/${f} ./
+done
+
+echo "listing of ${SAVEDIR}/${D} after download via scp:"
 ls -alh ${SAVEDIR}/${D}/
 
 pushd "${SAVEDIR}/${D}" &>/dev/null
-M="$( echo "${SITENAME} site backuped to ${SAVEDIR}/${D}:\n$(ls -gGh --time-style=+)" )"
-notifyme.sh "${D}:${SITENAME}_Alfahosting_Backup_SUCCESS" "$M"
+
+L="/dev/shm/backup_${SITE}_${H}"
+mkdir ${L} &>/dev/null
+cat - >>${L}/msg  <<EOF
+$(date "+%Y-%m-%d %H:%M:%S %a"): download end of backup files for ${SITE} from host ${H} complete:
+listing of ${SAVEDIR}/${D} :
+$(ls -gGh --time-style=+)
+
+EOF
+
+notifyme.sh "${D} backup summary for ${SITENAME} from ${H}" "$( cat ${L}/msg )"
+
+
 popd &>/dev/null

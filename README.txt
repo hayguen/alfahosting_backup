@@ -2,7 +2,7 @@
 trigger.sh     - triggers start of backup on server. this takes some minutes.
 check.sh       - check/list backuped files on server
 get.sh         - downloads the prepared backup files from server ..
-manual_sftp.sh - prepare/test 'trigger.sh'
+manual_ssh.sh  - prepare/test 'trigger.sh'
 
 
 required package:

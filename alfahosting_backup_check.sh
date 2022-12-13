@@ -12,20 +12,27 @@ if [ ! -f "${HOME}/.config/alfahosting_backup/${SITE}.conf" ]; then
   exit 10
 fi
 
+# conf needs to define environment variables: SSHHOST, SSHUSER, SSHPWD
 source "${HOME}/.config/alfahosting_backup/${SITE}.conf"
+H=$(hostname)
 
 
 export PATH="${HOME}/bin:${PATH}"
 DATE_FILENAME_PATTERN="+%Y-%m-%d_%a"
 D=$( date ${DATE_FILENAME_PATTERN} )
 
-SSHPASS="${SFTPPWD}" sshpass -e sftp -oBatchMode=no -b - -o "User=${SFTPUSER}" "${SFTPHOST}" &>/dev/shm/alfahosting_${SITE}_status.txt <<EOF
-  cd backup
-  ls -lh
-  bye
+SSHPASS="${SSHPWD}" sshpass -e ssh "${SSHUSER}"@${SSHHOST} \
+  "ls -1lh backup/" &>/dev/shm/alfahosting_${SITE}_list.txt
+
+echo "remote directory listing via ssh:"
+cat /dev/shm/alfahosting_${SITE}_list.txt
+
+M="$( cat /dev/shm/alfahosting_${SITE}_list.txt )"
+
+L="/dev/shm/backup_${SITE}_${H}"
+mkdir ${L} &>/dev/null
+cat - >>${L}/msg  <<EOF
+$(date "+%Y-%m-%d %H:%M:%S %a"): check of backup status for ${SITE} from host ${H}
+${M}
+
 EOF
-
-M="$( grep -v "^sftp>" /dev/shm/alfahosting_${SITE}_status.txt )"
-notifyme.sh "${D}:${SITENAME}_Alfahosting_Backup_Check" "$M"
-
-echo -e "sent notification mail with following content:\n$M"
